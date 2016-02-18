@@ -1,0 +1,164 @@
+#!/usr/bin/perl
+
+use 5.014;
+use warnings;
+
+package MyBot;
+use base qw( Bot::BasicBot );
+use Mojo::UserAgent;
+use Tie::File;
+use Youtube; # The Youtube.pm File
+
+my $busy = 0;
+tie my @array, 'Tie::File', "flags.bot" or die $!;
+
+#self->{master} : Master's bot
+#msg->{who} : Who send the message
+#self->{nick} : The nick of the bot
+#msg->{body} : the body of the message
+
+sub said {
+  my ($self, $msg) = @_;
+  my $response = $msg->{body};
+  my @splitword = split(/\s+/, $msg->{body});
+  if ($response =~ /^!\w+\s+=.*$/) #If we register a flag
+  {
+    my $flags = $splitword[0];
+    my $find = -1;
+    foreach my $i (0 .. $#array)
+    {
+      say $array[$i];
+      if ($array[$i] =~ /^$flags/) #Replace the flags if it exist
+      {
+        $array[$i] = $msg->{body} . " &authors& " . $msg->{who};
+        $find = $i;
+        last;
+      }
+    }
+    if ($find == -1) #The flags doesn't exsist thus we create it
+    {
+      push @array, $msg->{body} . " &authors& " . $msg->{who};
+    }
+  }
+  elsif($msg->{body} =~ /^!\w+$/) # if we call a flags
+  {
+    my $string = "";
+    foreach my $i (0 .. $#array)
+    {
+      if ($array[$i] =~ /^$response\s+/)
+      {
+        my @toPrint = split(/\s+/, $array[$i]);
+        foreach my $elt (2 .. $#toPrint - 2)
+        {
+          $string .= $toPrint[$elt] . " ";
+        }
+      }
+    }
+    if ($string ne "")
+    {
+      $self->say(
+        who=>$msg->{who},
+        channel=>$msg->{channel},
+        address=>$msg->{who},
+        body=>$string,
+      );
+    }
+  }
+  elsif($msg->{body} =~ /^!\w+\s+>\s+\w+$/) #The flags is for a person
+  {
+    my $string = "";
+    foreach my $i (0 .. $#array)
+    {
+      if ($array[$i] =~ /^$splitword[0]\s+/)
+      {
+        my @toPrint = split(/\s+/, $array[$i]);
+        foreach my $elt (2 .. $#toPrint - 2)
+        {
+          $string .= $toPrint[$elt] . " ";
+        }
+      }
+    }
+    if ($string ne "")
+    {
+      $self->say(
+        who=>$splitword[-1],
+        channel=>$msg->{channel},
+        address=>$splitword[-1],
+        body=>$string,
+      );
+    }
+  }
+
+  Youtube::find($self, $msg) if ($msg->{body} =~ /^!yt/); #!yt video
+
+
+  if (($msg->{body} =~ $self->{hl_regexp}) and $busy) {
+      $self->say(
+        who=>"all",
+        channel=>$msg->{channel},
+        body=>$self->{msg_hl},
+     );
+  }
+  
+  $busy = 0
+   if (($self->{master} eq $msg->{who}) and 
+        $msg->{body} =~ /Je suis la/);
+  if (($self->{master} eq $msg->{who}) and 
+        $msg->{body} =~ /Je suis occupe/)
+  {
+      $busy = 1;
+      $self->say(
+      who=>$self->{master},
+      channel=>$msg->{channel},
+      body=>"Ok",
+     );
+  }
+  # In order to disconnect the bot
+  if (($self->{master} eq $msg->{who}) and 
+        $msg->{body} =~ /Tu peux nous laisser le bot/)
+  # Change the regex if you want !
+  {
+    $self->shutdown($self->quit_message("Merci maitre"));
+    # You can personalize the quit message
+  }
+}
+
+sub emoted {
+  my ($self, $msg) = @_;
+  if ($msg->{body} =~ $self->{hl_regexp}) {
+      $self->say(
+        who=>$msg->{who},
+        channel=>$msg->{channel},
+        body=>$self->{msg_hl},
+      );
+  }
+}
+
+sub chanjoin {
+  my ($self, $msg) = @_;
+  if ($msg->{who} ne $self->{master} and $msg->{who} ne $self->{nick}) {
+    $self->say(
+      who=>$msg->{who},
+      address=>$msg->{who},
+      channel=>$msg->{channel},
+      body=>$self->{msg_join},
+    );
+  }
+}
+
+
+my $bot = MyBot->new(
+  server => "Typer your server",
+  channels => ["#yourChannel"],
+  nick => 'The nick of your bot',
+  charset=> "utf-8",
+  master=>"Your nick",
+  hl_regexp=>qr/.*Your nick.*/i, #Don't forget to escape character if you need
+  msg_join=>"Type like you want, it's when someone join the chan",
+  msg_hl=>"If you're busy, type like you want too"
+)->run();
+
+END
+{
+  untie @array;
+}
