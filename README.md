@@ -5,7 +5,10 @@ say.
 
 ## Configuration
 
-First, you need to set up your YouTube API key in the `src/Youtube.pm`.
+First, you need to have Bot::BasicBot and Mojo::UserAgent. This module is 
+available on the CPAN. If you don't have, just type `cpan Bot::BasicBot` and
+cpan `Mojo::UserAgent`.
+Next, you need to set up your YouTube API key in the `src/Youtube.pm`.
 You can customize your bot (like its name) in the `src/Bot.pl` file.
 You can create flags (starting with the ! character).
 All flags are stored in "flags.bot". If we create a flag that does already

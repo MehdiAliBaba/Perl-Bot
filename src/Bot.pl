@@ -153,7 +153,7 @@ my $bot = MyBot->new(
   charset=> "utf-8",
   master=>"Your name",
   hl_regexp=>qr/.*Your name.*/i, #Don't forget to escape character if we need
-  msg_hl=>"I'm busy", # If you'r busy
+  msg_hl=>"I'm busy", # If you're busy
 )->run();
 
 END
