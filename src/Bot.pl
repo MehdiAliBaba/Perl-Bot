@@ -7,7 +7,7 @@ package MyBot;
 use base qw( Bot::BasicBot );
 use Mojo::UserAgent;
 use Tie::File;
-use Youtube; # The Youtube.pm File
+use Youtube;
 
 my $busy = 0;
 tie my @array, 'Tie::File', "flags.bot" or die $!;
@@ -21,26 +21,26 @@ sub said {
   my ($self, $msg) = @_;
   my $response = $msg->{body};
   my @splitword = split(/\s+/, $msg->{body});
-  if ($response =~ /^!\w+\s+=.*$/) #If we register a flag
+  if ($response =~ /^!\w+\s+=.*$/) # If we want register a flags
   {
     my $flags = $splitword[0];
     my $find = -1;
     foreach my $i (0 .. $#array)
     {
       say $array[$i];
-      if ($array[$i] =~ /^$flags/) #Replace the flags if it exist
+      if ($array[$i] =~ /^$flags/) #We remplace it
       {
         $array[$i] = $msg->{body} . " &authors& " . $msg->{who};
         $find = $i;
         last;
       }
     }
-    if ($find == -1) #The flags doesn't exsist thus we create it
+    if ($find == -1) # We havn't find it
     {
       push @array, $msg->{body} . " &authors& " . $msg->{who};
     }
   }
-  elsif($msg->{body} =~ /^!\w+$/) # if we call a flags
+  elsif($msg->{body} =~ /^!\w+$/) #Call a flags
   {
     my $string = "";
     foreach my $i (0 .. $#array)
@@ -64,7 +64,7 @@ sub said {
       );
     }
   }
-  elsif($msg->{body} =~ /^!\w+\s+>\s+\w+$/) #The flags is for a person
+  elsif($msg->{body} =~ /^!\w+\s+>\s+\w+$/) #A flags to another person
   {
     my $string = "";
     foreach my $i (0 .. $#array)
@@ -89,8 +89,7 @@ sub said {
     }
   }
 
-  Youtube::find($self, $msg) if ($msg->{body} =~ /^!yt/); #!yt video
-
+  Youtube::find($self, $msg) if ($msg->{body} =~ /^!yt/); #Youtube API
 
   if (($msg->{body} =~ $self->{hl_regexp}) and $busy) {
       $self->say(
@@ -113,13 +112,13 @@ sub said {
       body=>"Ok",
      );
   }
-  # In order to disconnect the bot
+ 
+  # In order to leave the bot of IRC
   if (($self->{master} eq $msg->{who}) and 
-        $msg->{body} =~ /Tu peux nous laisser le bot/)
-  # Change the regex if you want !
+        $msg->{body} =~ /The message you want in order it leave the chan/)
   {
     $self->shutdown($self->quit_message("Merci maitre"));
-    # You can personalize the quit message
+    # The message where it quit the chan
   }
 }
 
@@ -148,14 +147,13 @@ sub chanjoin {
 
 
 my $bot = MyBot->new(
-  server => "Typer your server",
-  channels => ["#yourChannel"],
-  nick => 'The nick of your bot',
+  server => "your server",
+  channels => ["#yourchannel"],
+  nick => 'Name of your bot',
   charset=> "utf-8",
-  master=>"Your nick",
-  hl_regexp=>qr/.*Your nick.*/i, #Don't forget to escape character if you need
-  msg_join=>"Type like you want, it's when someone join the chan",
-  msg_hl=>"If you're busy, type like you want too"
+  master=>"Your name",
+  hl_regexp=>qr/.*Your name.*/i, #Don't forget to escape character if we need
+  msg_hl=>"I'm busy", # If you'r busy
 )->run();
 
 END
